@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+
 User = get_user_model()
 
 
@@ -19,8 +20,8 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     group = models.ForeignKey(
         Group,
-        on_delete=models.CASCADE,
-        related_name="group",
+        on_delete=models.SET_NULL,
+        related_name="posts",
         blank=True,
         null=True
     )
@@ -45,9 +46,14 @@ class Follow(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=('user', 'following'),
+                fields=['user', 'following'],
                 name='unique_follow'
-            ),)
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('following')),
+                name='prevent_self_follow',
+            )
+        )
 
 
 class Comment(models.Model):
